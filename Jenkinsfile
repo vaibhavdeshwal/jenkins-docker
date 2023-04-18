@@ -1,113 +1,37 @@
-// pipeline {
-//   agent {
-//     kubernetes {
-//       cloud 'kubernetes'
-//       label 'jenkins-agent'
-//       yaml """
-//         apiVersion: v1
-//         kind: Pod
-//         metadata:
-//           labels:
-//             jenkins: agent
-//             jenkins/label: jenkins-agent
-//         spec:
-//           containers:
-//           - name: docker
-//             image: docker:latest
-//             command:
-//             - sleep
-//             args:
-//             - infinity
-//           - name: kubectl
-//             image: bitnami/kubectl:latest
-//             command:
-//             - sleep
-//             args:
-//             - infinity
-//       """
-//     }
-//   }
-//   environment {
-//     DOCKER_IMAGE = "vaibhavdeshwal/simple-docker-app"
-//   }
-//   stages {
-//     stage('Build Docker Image') {
-//       steps {
-//         script {
-//           docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-//             def customImage = docker.build(env.DOCKER_IMAGE)
-//           }
-//         }
-//       }
-//     }
-//     stage('Push Docker Image') {
-//       steps {
-//         script {
-//           docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-//             docker.image(env.DOCKER_IMAGE).push()
-//           }
-//         }
-//       }
-//     }
-//   }
-// }
-
-
 pipeline {
- agent {
-    kubernetes {
-      cloud 'kubernetes'
-      label 'jenkins-agent'
-      yaml """
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          labels:
-            jenkins: agent
-            jenkins/label: jenkins-agent
-        spec:
-          containers:
-          - name: docker
-            image: docker
-            command:
-            - sleep
-            args:
-            - infinity
-          - name: kubectl
-            image: docker
-            command:
-            - sleep
-            args:
-            - infinity
-      """
+    agent {
+        kubernetes {
+            cloud 'kubernetes'
+            label 'myslavepod'
+        }
     }
-  }
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '5'))
-  }
-  environment {
-    DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-  }
-  stages {
-    stage('Build') {
-      steps {
-        sh 'docker build -t vaibhavdeshwal/jenkins-docker-hub .'
-      }
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        DOCKER_IMAGE_NAME = 'myapp'
+        DOCKER_IMAGE_TAG = 'latest'
+        DOCKER_REPO_URL = 'vaibhavdeshwal/myapp'
+        GITHUB_REPO_URL = 'https://github.com/vaibhavdeshwal/jenkins-docker'
     }
-    stage('Login') {
-      steps {
-        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-      }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', 
+                          branches: [[name: '*/main']],
+                          userRemoteConfigs: [[url: GITHUB_REPO_URL]]])
+            }
+        }
+        
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    def dockerImage = docker.build("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
+                        dockerImage.push("${DOCKER_REPO_URL}:${DOCKER_IMAGE_TAG}")
+                    }
+                }
+            }
+        }
     }
-    stage('Push') {
-      steps {
-        sh 'docker push vaibhavdeshwal/jenkins-docker-hub'
-      }
-    }
-  }
-  post {
-    always {
-      sh 'docker logout'
-    }
-  }
 }
