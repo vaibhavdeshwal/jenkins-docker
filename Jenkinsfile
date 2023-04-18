@@ -68,7 +68,7 @@ pipeline {
         spec:
           containers:
           - name: docker
-            image: docker:latest
+            image: busybox
             command:
             - sleep
             args:
