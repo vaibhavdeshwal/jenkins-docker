@@ -68,13 +68,13 @@ pipeline {
         spec:
           containers:
           - name: docker
-            image: busybox
+            image: docker
             command:
             - sleep
             args:
             - infinity
           - name: kubectl
-            image: busybox
+            image: docker
             command:
             - sleep
             args:
