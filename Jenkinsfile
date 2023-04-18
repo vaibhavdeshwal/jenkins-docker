@@ -74,7 +74,7 @@ pipeline {
             args:
             - infinity
           - name: kubectl
-            image: bitnami/kubectl:latest
+            image: busybox
             command:
             - sleep
             args:
