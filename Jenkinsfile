@@ -1,53 +1,86 @@
+// pipeline {
+//   agent {
+//     kubernetes {
+//       cloud 'kubernetes'
+//     //   label 'jenkins-agent'
+//     //   yaml """
+//     //     apiVersion: v1
+//     //     kind: Pod
+//     //     metadata:
+//     //       labels:
+//     //         jenkins: agent
+//     //         jenkins/label: jenkins-agent
+//     //     spec:
+//     //       containers:
+//     //       - name: docker
+//     //         image: docker:latest
+//     //         command:
+//     //         - sleep
+//     //         args:
+//     //         - infinity
+//     //       - name: kubectl
+//     //         image: bitnami/kubectl:latest
+//     //         command:
+//     //         - sleep
+//     //         args:
+//     //         - infinity
+//     //   """
+//     }
+//   }
+//   environment {
+//     DOCKER_IMAGE = "vaibhavdeshwal/simple-docker-app"
+//   }
+//   stages {
+//     stage('Build Docker Image') {
+//       steps {
+//         script {
+//           docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+//             def customImage = docker.build(env.DOCKER_IMAGE)
+//           }
+//         }
+//       }
+//     }
+//     stage('Push Docker Image') {
+//       steps {
+//         script {
+//           docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
+//             docker.image(env.DOCKER_IMAGE).push()
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+
+
 pipeline {
-  agent {
-    kubernetes {
-      cloud 'kubernetes'
-    //   label 'jenkins-agent'
-    //   yaml """
-    //     apiVersion: v1
-    //     kind: Pod
-    //     metadata:
-    //       labels:
-    //         jenkins: agent
-    //         jenkins/label: jenkins-agent
-    //     spec:
-    //       containers:
-    //       - name: docker
-    //         image: docker:latest
-    //         command:
-    //         - sleep
-    //         args:
-    //         - infinity
-    //       - name: kubectl
-    //         image: bitnami/kubectl:latest
-    //         command:
-    //         - sleep
-    //         args:
-    //         - infinity
-    //   """
-    }
+  agent any
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '5'))
   }
   environment {
-    DOCKER_IMAGE = "vaibhavdeshwal/simple-docker-app"
+    DOCKERHUB_CREDENTIALS = credentials('dockerhub')
   }
   stages {
-    stage('Build Docker Image') {
+    stage('Build') {
       steps {
-        script {
-          docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-            def customImage = docker.build(env.DOCKER_IMAGE)
-          }
-        }
+        sh 'docker build -t lloydmatereke/jenkins-docker-hub .'
       }
     }
-    stage('Push Docker Image') {
+    stage('Login') {
       steps {
-        script {
-          docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-            docker.image(env.DOCKER_IMAGE).push()
-          }
-        }
+        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
       }
+    }
+    stage('Push') {
+      steps {
+        sh 'docker push lloydmatereke/jenkins-docker-hub'
+      }
+    }
+  }
+  post {
+    always {
+      sh 'docker logout'
     }
   }
 }
