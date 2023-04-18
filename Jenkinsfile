@@ -54,9 +54,32 @@
 
 
 pipeline {
-  agent {
+ agent {
     kubernetes {
-        cloud 'kubernetes'
+      cloud 'kubernetes'
+      label 'jenkins-agent'
+      yaml """
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          labels:
+            jenkins: agent
+            jenkins/label: jenkins-agent
+        spec:
+          containers:
+          - name: docker
+            image: docker:latest
+            command:
+            - sleep
+            args:
+            - infinity
+          - name: kubectl
+            image: bitnami/kubectl:latest
+            command:
+            - sleep
+            args:
+            - infinity
+      """
     }
   }
   options {
