@@ -54,7 +54,11 @@
 
 
 pipeline {
-  agent any
+  agent {
+    kubernetes {
+        cloud 'kubernetes'
+    }
+  }
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
