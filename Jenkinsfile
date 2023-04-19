@@ -39,7 +39,11 @@
 
 pipeline{
 
-	agent any
+	agent {
+        kubernetes {
+            cloud 'kubernetes'
+        }
+    }
 
 	environment {
 		DOCKERHUB_CREDENTIALS=credentials('dockerhub')
@@ -50,7 +54,7 @@ pipeline{
 		stage('Build') {
 
 			steps {
-				sh 'docker build -t vaibhavdeshwal/myapp:latest .'
+				sh 'sudo docker build -t vaibhavdeshwal/myapp:latest .'
 			}
 		}
 
@@ -64,14 +68,14 @@ pipeline{
 		stage('Push') {
 
 			steps {
-				sh 'docker push vaibhavdeshwal/myapp:latest'
+				sh 'sudo docker push vaibhavdeshwal/myapp:latest'
 			}
 		}
 	}
 
 	post {
 		always {
-			sh 'docker logout'
+			sh 'sudo docker logout'
 		}
 	}
 
