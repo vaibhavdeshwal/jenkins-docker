@@ -1,15 +1,14 @@
 pipeline {
-    agent {
-        kubernetes {
-            cloud 'kubernetes'
-        }
-    }
 environment {
 registry = "vaibhav/deshwal"
 registryCredential = 'dockerhub'
 dockerImage = ''
 }
-agent any
+agent {
+    kubernetes {
+        cloud 'kubernets'
+    }
+}
 stages {
 stage('Cloning our Git') {
 steps {
