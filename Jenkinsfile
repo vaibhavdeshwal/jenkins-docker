@@ -1,4 +1,9 @@
 pipeline {
+    agent {
+        kubernetes {
+            cloud 'kubernetes'
+        }
+    }
 environment {
 registry = "vaibhav/deshwal"
 registryCredential = 'dockerhub'
