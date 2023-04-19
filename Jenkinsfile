@@ -6,7 +6,7 @@ dockerImage = ''
 }
 agent {
     kubernetes {
-        cloud 'kubernets'
+        cloud 'kubernetes'
     }
 }
 stages {
